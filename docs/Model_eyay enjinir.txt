@@ -1,0 +1,6 @@
+https://huggingface.co/fauzanazz/sailor2-fraudFinetuned-indo-4b
+https://huggingface.co/fauzanazz/qwen2-audio-indo-fraudFinetune-4b
+
+training
+https://www.kaggle.com/code/mohamadmaulana/fine-tuning-sailor2
+https://www.kaggle.com/code/fazazz123/finetune-audio-dataset
