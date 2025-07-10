@@ -112,19 +112,33 @@ streamlit run app.py
 ---
 
 ## Requirements
+
+### Core Requirements
 - Python 3.8+
-- Packages (see `requirements.txt`):
+- Packages (install with `pip install -r requirements.txt`):
   - streamlit
   - moviepy
   - pydub
   - imageio-ffmpeg
-- Additional (for dataset creation):
+  - librosa
+  - torch
+  - transformers
+  - accelerate
+  - peft
+
+### Additional Requirements (for dataset creation)
+- Install separately as needed:
   - azure-cognitiveservices-speech
   - python-dotenv
   - google-generativeai
   - pandas
 
-Install extra packages as needed:
+Install all core requirements:
+```bash
+pip install -r requirements.txt
+```
+
+Install extra packages for dataset creation:
 ```bash
 pip install azure-cognitiveservices-speech python-dotenv google-generativeai pandas
 ```
