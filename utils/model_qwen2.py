@@ -1,8 +1,9 @@
+# Inference model Qwen2-Audio untuk klasifikasi fraud
 import torch
 import librosa
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration, BitsAndBytesConfig
 
-# --- Quantization config sesuai training ---
+# Konfigurasi quantization sesuai training
 quant_config = BitsAndBytesConfig(
     load_in_4bit=True,
     bnb_4bit_compute_dtype=torch.float16,
@@ -10,7 +11,7 @@ quant_config = BitsAndBytesConfig(
     bnb_4bit_quant_type="nf4"
 )
 
-# --- Load processor dan model  ---
+# Load processor dan model Qwen2-Audio (finetuned)
 MODEL_PATH = "models/qwen2-audio-finetuned"  # Ganti ke path model fine-tuned
 processor = AutoProcessor.from_pretrained(
     MODEL_PATH,
@@ -23,6 +24,7 @@ model = Qwen2AudioForConditionalGeneration.from_pretrained(
     device_map="auto",
 )
 
+# Fungsi utama untuk prediksi fraud dengan Qwen2-Audio
 def predict_fraud_qwen2(audio_path: str, transcript: str = None) -> dict:
     """
     Inference Qwen2-Audio-7B untuk klasifikasi fraud.

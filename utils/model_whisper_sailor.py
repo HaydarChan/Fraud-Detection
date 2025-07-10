@@ -1,3 +1,4 @@
+# Inference pipeline Whisper + Sailor2 untuk deteksi fraud dari audio
 import torch
 import re
 from peft import PeftModel
@@ -5,6 +6,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import os
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
+# Konfigurasi model dan quantization
 base_model_id = "sail/Sailor2-8B"
 adapter_id = "models/sailor2-finetuned"
 
@@ -15,6 +17,7 @@ quantization_config = BitsAndBytesConfig(
     bnb_4bit_quant_type="nf4"
 )
 
+# Load model dan tokenizer
 model = AutoModelForCausalLM.from_pretrained(
     base_model_id,
     quantization_config=quantization_config,
@@ -30,7 +33,7 @@ PROMPT_TEMPLATE = (
     "Klasifikasi yang benar adalah: kelas"
 )
 
-
+# Fungsi utama: transkripsi audio dengan Whisper, lalu prediksi fraud dengan Sailor2
 def transcribe_and_predict_whisper_sailor(audio_path: str) -> dict:
     """
     Fungsi ini mengasumsikan audio sudah di-transkrip (oleh Whisper).
