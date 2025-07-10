@@ -1,9 +1,6 @@
 import torch
 import librosa
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration, BitsAndBytesConfig
-from urllib.request import urlopen
-from io import BytesIO
-import os
 
 # --- Quantization config sesuai training ---
 quant_config = BitsAndBytesConfig(

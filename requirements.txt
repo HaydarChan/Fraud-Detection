@@ -2,3 +2,8 @@ streamlit
 moviepy
 pydub
 imageio-ffmpeg
+librosa
+torch
+transformers
+accelerate
+peft

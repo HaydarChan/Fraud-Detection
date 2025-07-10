@@ -1,44 +1,35 @@
 import torch
-from unsloth import FastLanguageModel
-from transformers import AutoTokenizer
 import re
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+import os
+os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
-# --- Config sesuai training ---
-model_name = "models/sailor2-finetuned"  # Ganti ke path model fine-tuned jika sudah ada
-load_in_4bit = True
-max_seq_length = 2048
-dtype = None
+base_model_id = "sail/Sailor2-8B"
+adapter_id = "models/sailor2-finetuned"
 
-# Load model & tokenizer
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = model_name,
-    load_in_4bit = load_in_4bit,
-    max_seq_length = max_seq_length,
-    dtype = dtype,
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4"
 )
 
-# LoRA config (sama seperti training)
-model = FastLanguageModel.get_peft_model(
-    model,
-    r = 16,
-    target_modules = [
-        "lm_head",
-        "q_proj", "k_proj", "v_proj", "o_proj",
-        "gate_proj", "up_proj", "down_proj", "all-linear"],
-    lora_alpha = 32,
-    lora_dropout = 0.1,
-    bias = "none",    
-    use_gradient_checkpointing = "unsloth",
-    random_state = 12,
-    use_rslora = True,
+model = AutoModelForCausalLM.from_pretrained(
+    base_model_id,
+    quantization_config=quantization_config,
+    torch_dtype=torch.bfloat16,
+    device_map="auto"
 )
 
-# Prompt template sesuai training
+tokenizer = AutoTokenizer.from_pretrained(base_model_id)
+model = PeftModel.from_pretrained(model, adapter_id)
 PROMPT_TEMPLATE = (
     "Berdasarkan  percakapan 2 orang melalui telepon berikut, klasifikasikan label yang 1 untuk percakapan biasa dan 2 untuk penipuan telekom:\n"
     "{}\n"
     "Klasifikasi yang benar adalah: kelas"
 )
+
 
 def transcribe_and_predict_whisper_sailor(audio_path: str) -> dict:
     """
