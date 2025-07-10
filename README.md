@@ -32,7 +32,7 @@ A comprehensive system for detecting fraudulent phone calls using audio analysis
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/HaydarChan/Fraud-Detection.git
-cd fraud
+cd Fraud-Detection
 ```
 
 ### 2. Create and Activate a Virtual Environment
@@ -75,25 +75,33 @@ python generateAudio.py
 ```
 - This will use Azure TTS to generate audio files for each dialog in `audio_dataset_azure/`.
 
-### 7. Create the Final Dataset CSV
+### 7. (Optional) Audio Processing
+If you want to preprocess audio (misal: resample ke 16kHz, mono), jalankan:
+```bash
+python audio_preprocess.py
+```
+- Ini akan memproses file di `audio_dataset_azure/` dan menyimpan hasilnya di `preprocessed_file/`.
+- Anda juga bisa menggunakan fungsi preprocessing di `utils/audio_processing.py` untuk kebutuhan kustom.
+
+### 8. Create the Final Dataset CSV
 ```bash
 python create_dataset.py
 ```
 - This will produce `dataset.csv` with columns: `file`, `label`, `transcription`.
 
-### 8. Run the Streamlit App
+### 9. Train the Models (Finetuning)
+- Open the notebooks in `training_notebook/` using Jupyter or VSCode:
+  - `finetune-qwen2-audio.ipynb`
+  - `finetune-sailor2.ipynb`
+- Follow the instructions in each notebook to finetune the models on your dataset.
+
+### 10. Run the Streamlit App
 From the project root:
 ```bash
 streamlit run app.py
 ```
 - Open the provided local URL in your browser.
 - Upload a `.wav` or `.mp4` file to analyze and compare fraud detection results.
-
-### 9. Run the Training Notebooks
-- Open the notebooks in `training_notebook/` using Jupyter or VSCode:
-  - `finetune-qwen2-audio.ipynb`
-  - `finetune-sailor2.ipynb`
-- Follow the instructions in each notebook to finetune the models on your dataset.
 
 ---
 
