@@ -1,11 +1,9 @@
-# Utility untuk ekstraksi dan preprocessing audio (ekstrak dari video, resample, mono, dsb)
 import os
 import librosa
 import soundfile as sf
 import tempfile
 import subprocess
 
-# Ekstrak audio dari file (wav langsung, mp4 diekstrak pakai ffmpeg)
 def extract_audio(file_path: str) -> str:
     ext = os.path.splitext(file_path)[1].lower()
     if ext == '.wav':
@@ -23,7 +21,6 @@ def extract_audio(file_path: str) -> str:
     else:
         raise ValueError("Unsupported file type")
 
-# Preprocessing audio: resample ke 16kHz, mono, dan simpan hasilnya
 def preprocess_audio(input_path: str, output_path: str = None, target_sr: int = 16000) -> str:
     """
     Preprocess audio: resample to target_sr (default 16kHz), convert to mono, and save.

@@ -1,58 +1,48 @@
-# Streamlit web app untuk deteksi panggilan penipuan menggunakan dua model ML
 import streamlit as st
-# Ekstrak audio dari file, preprocessing, dan inference model
-from utils.audio_processing import extract_audio
-from utils.model_qwen2 import predict_fraud_qwen2
-from utils.model_whisper_sailor import transcribe_and_predict_whisper_sailor
-from utils.audio_processing import preprocess_audio
 import tempfile
 import os
 
-# Konfigurasi halaman Streamlit
+from utils.model_whisper import transcribe_audio
+from utils.model_sailor2 import predict_fraud_sailor2
+from utils.model_qwen2 import predict_fraud_qwen2
+
 st.set_page_config(page_title="Fraud Call Detector", layout="centered")
 st.title("Fraud Call Detector")
-st.markdown("Upload a `.wav` or `.mp4` file to analyze and compare fraud detection using Qwen2-Audio and Whisper+Sailor.")
+st.markdown("Upload a `.wav`, `.mp3`, or `.mp4` file to analyze and classify fraud using Whisper, Sailor2, and Qwen2-Audio.")
 
-# Upload file audio/video
-uploaded_file = st.file_uploader("Upload audio or video file", type=["wav", "mp4"])
+uploaded_file = st.file_uploader("Upload audio or video file", type=["wav", "mp3", "mp4", "ogg", "m4a"])
 
 if uploaded_file:
-    # Simpan file upload ke file sementara
+    # Simpan file upload ke temp
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp:
         tmp.write(uploaded_file.read())
-        input_path = tmp.name
-
-    # Ekstrak audio dan preprocessing
-    with st.spinner("Extracting audio..."):
-        audio_path = extract_audio(input_path)
-        preprocessed_audio_path = preprocess_audio(audio_path)
-
-    # Transkripsi dan prediksi dengan Whisper+Sailor
-    with st.spinner("Transcribing with Whisper+Sailor..."):
-        whisper_result = transcribe_and_predict_whisper_sailor(audio_path)
-        transcript = whisper_result['transcript']
-
-    st.markdown("### Transcript (from Whisper+Sailor)")
-    st.code(transcript, language="text")
+        audio_path = tmp.name
 
     st.markdown("### Listen to the audio")
     st.audio(audio_path, format="audio/wav", start_time=0)
 
-    # Prediksi dengan Qwen2-Audio
-    with st.spinner("Predicting with Qwen2-Audio..."):
-        qwen2_pred = predict_fraud_qwen2(audio_path, transcript)  # transcript bisa dipakai jika model Qwen2 kamu butuh text
+    with st.spinner("Transcribing with Whisper..."):
+        transcript = transcribe_audio(audio_path)
 
-    # Tampilkan hasil perbandingan prediksi
+    st.markdown("### Transcript (from Whisper)")
+    st.code(transcript, language="text")
+
+    with st.spinner("Predicting with Sailor2..."):
+        sailor2_result = predict_fraud_sailor2(transcript)
+
+    with st.spinner("Predicting with Qwen2-Audio..."):
+        qwen2_result = predict_fraud_qwen2(audio_path)
+
     st.markdown("### Results Comparison")
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("Qwen2-Audio-7B (Finetuned)")
-        st.markdown(f"**Prediction:** {'1 (Fraud)' if qwen2_pred['fraud'] else '0 (Not Fraud)'}")
+        st.subheader("Qwen2-Audio")
+        st.markdown(f"**Prediction:** {'1 (Fraud)' if qwen2_result['fraud'] else '0 (Not Fraud)'}")
+        st.markdown(f"**Raw model output:** {qwen2_result['raw_pred']}")
     with col2:
-        st.subheader("Whisper + Sailor")
-        st.markdown(f"**Prediction:** {'1 (Fraud)' if whisper_result['fraud'] else '0 (Not Fraud)'}")
+        st.subheader("Whisper + Sailor2")
+        st.markdown(f"**Prediction:** {'1 (Fraud)' if sailor2_result['fraud'] else '0 (Not Fraud)'}")
+        st.markdown(f"**Raw model output:** {sailor2_result['raw_pred']}")
 
-    # Bersihkan file sementara
-    os.remove(input_path)
-    if audio_path != input_path:
-        os.remove(audio_path)
+    # Clean up temp file
+    os.remove(audio_path)
