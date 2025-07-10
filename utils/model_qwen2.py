@@ -2,6 +2,7 @@ import torch
 import librosa
 from transformers import Qwen2AudioForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
 
+
 MODEL_PATH = "fauzanazz/qwen2-audio-indo-fraudFinetune-4b"
 max_seq_length = 2048
 
