@@ -7,3 +7,4 @@ torch
 transformers
 accelerate
 peft
+openai-whisper
