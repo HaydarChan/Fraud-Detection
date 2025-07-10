@@ -8,44 +8,26 @@ import logging
 from dotenv import load_dotenv
 load_dotenv()
 
-# ==============================================================================
-# LANGKAH 1: KONFIGURASI DAN SETUP
-# ==============================================================================
-
-# Setup logging dasar
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- Konfigurasi yang Dapat Diubah ---
 METADATA_CSV_PATH = "synthetic_dialogs_final.csv"
 OUTPUT_AUDIO_FOLDER = "audio_dataset_azure"
-SILENCE_BETWEEN_CLIPS_MS = 2000  # Jeda antar kalimat dalam milidetik
+SILENCE_BETWEEN_CLIPS_MS = 2000 
 
-# --- Konfigurasi Azure Speech Service (DIAMBIL DARI ENVIRONMENT VARIABLES) ---
-# PENTING: Jangan tulis kunci API langsung di dalam kode.
-# Atur environment variables di sistem Anda.
-# Contoh di terminal:
-# export AZURE_SPEECH_KEY="kunci_rahasia_anda"
-# export AZURE_SPEECH_REGION="southeastasia"
 AZURE_SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
 AZURE_SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION")
 
-# Voice mapping untuk setiap speaker
 VOICE_CONFIG = {
-    'penipu': 'id-ID-ArdiNeural',      # Suara pria untuk penipu
-    'korban': 'id-ID-GadisNeural',     # Suara wanita untuk korban
-    'penerima': 'id-ID-GadisNeural',    # Suara wanita untuk penerima
-    'penelepon': 'id-ID-ArdiNeural',  # Suara pria untuk penelpon
+    'penipu': 'id-ID-ArdiNeural',  
+    'korban': 'id-ID-GadisNeural',
+    'penerima': 'id-ID-GadisNeural',  
+    'penelepon': 'id-ID-ArdiNeural',  
 }
-
-# ==============================================================================
-# LANGKAH 2: FUNGSI AZURE TTS YANG SUDAH DIPERBAIKI
-# ==============================================================================
 
 def create_speech_synthesizer(voice_name, output_path):
     """Membuat dan mengonfigurasi SpeechSynthesizer."""
     speech_config = speechsdk.SpeechConfig(subscription=AZURE_SPEECH_KEY, region=AZURE_SPEECH_REGION)
     
-    # Mengatur output langsung ke format WAV berkualitas tinggi
     speech_config.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm)
     speech_config.speech_synthesis_voice_name = voice_name
     
@@ -78,10 +60,6 @@ def synthesize_text_to_wav(synthesizer, text):
         logging.error(f"Terjadi error saat sintesis: {e}", exc_info=True)
         return False
 
-# ==============================================================================
-# LANGKAH 3: FUNGSI UNTUK MEMERIKSA FILE YANG HILANG
-# ==============================================================================
-
 def check_missing_files(df):
     """
     Memeriksa file audio mana yang hilang atau rusak dari folder output.
@@ -98,10 +76,9 @@ def check_missing_files(df):
             missing_files.append(dialogue_id)
             logging.info(f"File hilang: dialog_{dialogue_id}.wav")
         else:
-            # Periksa apakah file kosong atau rusak
             try:
                 file_size = os.path.getsize(output_file_path)
-                if file_size < 1024:  # File kurang dari 1KB kemungkinan rusak
+                if file_size < 1024:  
                     corrupted_files.append(dialogue_id)
                     logging.warning(f"File mungkin rusak (ukuran {file_size} bytes): dialog_{dialogue_id}.wav")
             except Exception as e:
@@ -142,10 +119,6 @@ def backup_corrupted_files(corrupted_ids):
                 logging.info(f"File rusak dipindahkan ke backup: dialog_{dialogue_id}.wav")
         except Exception as e:
             logging.error(f"Gagal membackup file dialog_{dialogue_id}.wav: {e}")
-
-# ==============================================================================
-# LANGKAH 4: PROSES GENERASI AUDIO DARI CSV
-# ==============================================================================
 
 def generate_and_combine_dialogue_audio(dialog_id, dialogue_text, output_path):
     """
@@ -210,7 +183,6 @@ def generate_and_combine_dialogue_audio(dialog_id, dialogue_text, output_path):
 
 def main():
     """Fungsi utama untuk menjalankan seluruh proses."""
-    # Validasi konfigurasi Azure yang krusial
     if not AZURE_SPEECH_KEY or not AZURE_SPEECH_REGION:
         logging.critical("Error: Environment variable AZURE_SPEECH_KEY dan AZURE_SPEECH_REGION harus diatur!")
         logging.critical("Anda bisa mendapatkannya dari portal Azure di bawah layanan 'Speech Services'.")
@@ -219,7 +191,7 @@ def main():
     os.makedirs(OUTPUT_AUDIO_FOLDER, exist_ok=True)
     
     try:
-        df = pd.read_csv(METADATA_CSV_PATH,  # Perbaiki masalah baris buruk
+        df = pd.read_csv(METADATA_CSV_PATH,  
 )
     except FileNotFoundError:
         logging.critical(f"Error: File CSV '{METADATA_CSV_PATH}' tidak ditemukan!")
@@ -227,14 +199,12 @@ def main():
     
     logging.info(f"Memeriksa status file audio untuk {len(df)} dialog...")
     
-    # Periksa file yang hilang atau rusak
     files_to_regenerate = check_missing_files(df)
     
     if not files_to_regenerate:
         logging.info("Tidak ada file yang perlu diregenerasi. Semua file sudah lengkap!")
         return
     
-    # Filter DataFrame untuk hanya memproses file yang perlu diregenerasi
     df_to_process = df[df['id'].isin(files_to_regenerate)]
     
     logging.info(f"Memulai regenerasi untuk {len(files_to_regenerate)} file...")
@@ -242,7 +212,6 @@ def main():
     for speaker, voice in VOICE_CONFIG.items():
         logging.info(f"  {speaker}: {voice}")
     
-    # Backup file yang rusak terlebih dahulu
     corrupted_files = []
     for dialogue_id in files_to_regenerate:
         output_file_path = os.path.join(OUTPUT_AUDIO_FOLDER, f"dialog_{dialogue_id}.wav")
@@ -252,13 +221,12 @@ def main():
     if corrupted_files:
         backup_corrupted_files(corrupted_files)
     
-    # Proses regenerasi
     success_count = 0
     failed_count = 0
     
     for _, row in df_to_process.iterrows():
         dialogue_id = row['id']
-        dialogue_text = str(row['dialog']) # Pastikan tipe data string
+        dialogue_text = str(row['dialog'])
         
         output_file_path = os.path.join(OUTPUT_AUDIO_FOLDER, f"dialog_{dialogue_id}.wav")
         

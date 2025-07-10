@@ -8,32 +8,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# --- KONFIGURASI DAN DAFTAR SKENARIO ANDA TETAP SAMA ---
-# Konfigurasi
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
-MODEL = "gemini-2.0-flash"  # atau model Gemini lain yang kamu punya akses
+MODEL = "gemini-2.0-flash"  
 CSV_FILENAME = "synthetic_dialogs_final.csv"
-DIALOGS_PER_SCENARIO = 12 # Jumlah dialog yang akan dibuat per skenario
+DIALOGS_PER_SCENARIO = 12
 
 fraud_scenarios = {
     "Penipuan Phishing & Malware (APK Paling Viral)": [
-        # Kasus paling viral, diberi prioritas tertinggi
-        "Penipu mengaku dari jasa pengiriman (JNE/J&T/Anteraja), mengirim 'foto resi paket' dalam format file .APK.",
+=        "Penipu mengaku dari jasa pengiriman (JNE/J&T/Anteraja), mengirim 'foto resi paket' dalam format file .APK.",
         "Penipu menyebar 'undangan pernikahan digital' atau 'undangan syukuran aqiqah' palsu berformat .APK yang bisa menguras m-banking.",
         "Penipu mengaku dari Kepolisian, mengirimkan 'surat tilang elektronik (e-tilang)' palsu dalam bentuk file .APK.",
         "Penipu mengaku dari PLN/PDAM, mengirim 'tagihan bulanan' atau 'pemberitahuan pemadaman' dalam format file .APK.",
         "Penipu mengaku dari kantor pajak, mengirim 'SPT Tahunan' atau 'tagihan pajak' dalam bentuk file .APK."
     ],
     "Penipuan Perbankan (Modus Klasik & Baru)": [
-        # Kasus viral terkait perubahan biaya transfer
         "Penipu menyamar sebagai staf bank (BCA/BRI/Mandiri), mengabarkan ada 'perubahan tarif transfer menjadi Rp150.000/bulan' dan meminta korban mengisi link phishing untuk membatalkannya.",
         "Penipu dari 'divisi anti-fraud' bank menginformasikan kartu ATM korban terindikasi skimming dan meminta 16 digit nomor kartu serta kode OTP untuk 'pemblokiran darurat'.",
         "Penipu menginformasikan korban terpilih untuk upgrade menjadi nasabah prioritas/kartu kredit premium gratis dengan syarat verifikasi data sensitif melalui telepon.",
         "Penipu menelepon dan mengatakan bahwa korban memiliki tagihan kartu kredit yang belum dibayar, mengancam akan dilaporkan ke BI Checking jika tidak segera dilunasi ke rekening pribadi."
     ],
     "Penipuan Lowongan Kerja Fiktif (Part-Time & Remote)": [
-        # Modus "Like & Subscribe" sangat marak
         "Penipu menawarkan pekerjaan paruh waktu (part-time) mudah seperti 'Like & Subscribe YouTube' atau 'review produk di e-commerce', namun meminta deposit untuk 'tugas' berikutnya.",
         "Penipu mengaku dari HRD perusahaan BUMN atau tambang ternama, mengundang interview online, tapi korban harus mentransfer 'biaya akomodasi/tiket' yang dijanjikan akan di-refund.",
         "Penipu menawarkan pekerjaan entri data dari rumah dengan gaji tinggi, namun mengharuskan korban membeli 'software khusus' atau 'paket membership' dari mereka terlebih dahulu."
@@ -44,18 +39,15 @@ fraud_scenarios = {
         "Penipu (sebagai penjual) di marketplace mengabarkan barang pesanan korban kosong dan mengarahkan proses refund di luar platform (via WhatsApp) untuk menipu."
     ],
     "Penipuan Pemerasan & Ancaman (Pinjol Ilegal)": [
-        # Pinjol ilegal adalah masalah besar
         "Penipu mengaku sebagai debt collector dari pinjaman online (pinjol) ilegal, menagih tunggakan fiktif dan mengancam akan menyebar data KTP/foto korban ke seluruh kontak jika tidak membayar.",
         "Penipu menelepon dengan panik, mengaku anggota keluarga korban (anak/suami) mengalami kecelakaan atau ditangkap polisi, dan meminta uang tebusan/damai segera.",
         "Penipu mengirimkan pesan berisi ancaman setelah korban menginstal APK, mengklaim telah menyadap HP korban dan akan menyebar data pribadinya."
     ],
     "Penipuan Asmara (Romance Scam Khas Indonesia)": [
-        # Profil palsu aparat sangat umum
         "Penipu dengan profil palsu sebagai anggota TNI/Polisi atau pekerja tambang/pelayaran, menjalin hubungan asmara online lalu meminta uang untuk 'keadaan darurat' atau 'biaya cuti'.",
         "Penipu mengaku sebagai WNA tampan/cantik yang tertahan di Bea Cukai Indonesia dengan barang mewah untuk korban, dan meminta uang untuk 'pajak tebusan'.",
     ],
     "Penipuan Modus Salah Transfer & Investasi": [
-        # Modus klasik yang masih efektif
         "Penipu sengaja mentransfer sejumlah uang ke korban, lalu menelepon dengan panik/sopan mengaku salah transfer dan meminta dikembalikan ke nomor rekening yang berbeda dari pengirim.",
         "Penipu menawarkan investasi bodong dengan skema ponzi, seperti titip dana (jastip trading) atau investasi robot trading dengan jaminan keuntungan tetap (fixed profit) yang tidak masuk akal.",
     ]
@@ -143,9 +135,7 @@ nonfraud_scenarios = {
 
 
 def build_prompt_revised(scenario_category, scenario_detail, label):
-    # Kumpulan contoh fraud yang beragam, mencakup modus-modus viral.
     fraud_example_pool = [
-        # Contoh 1: APK Kurir
         """### CONTOH
 Konteks Skenario: Penipuan Phishing & Malware (APK Paling Viral)
 Detail spesifik: Penipu mengaku dari jasa pengiriman (JNE/J&T/Anteraja), mengirim 'foto resi paket' dalam format file .APK.
@@ -160,7 +150,6 @@ Penipu: Baik, sudah saya kirim ya Bu. Filenya dalam bentuk aplikasi Lihat Resi, 
 Korban: Loh kok aplikasi? Bukan foto biasa?
 Penipu: Iya Bu, ini sistem keamanan baru dari pusat. Lebih aman katanya. Ditunggu ya Bu konfirmasinya.
 Korban: Hmm ya sudah saya coba.""",
-        # Contoh 2: Perubahan Tarif Bank
         """### CONTOH
 Konteks Skenario: Penipuan Perbankan (Modus Klasik & Baru)
 Detail spesifik: Penipu menyamar sebagai staf bank (BCA), mengabarkan ada 'perubahan tarif transfer menjadi Rp150.000/bulan'.
@@ -173,7 +162,6 @@ Penipu: Kami paham, Pak. Jika Bapak tidak setuju dan ingin tetap menggunakan ske
 Korban: Oh ada linknya? Oke oke saya isi.
 Penipu: Silakan diisi segera ya Pak, karena formulir hanya valid selama 10 menit. Nanti akan ada kode yang masuk ke HP Bapak, mohon diinformasikan ke kami untuk verifikasi.
 Korban: Oke, saya cek SMSnya.""",
-        # Contoh 3: Lowongan Kerja Part-Time
         """### CONTOH
 Konteks Skenario: Penipuan Lowongan Kerja Fiktif (Part-Time & Remote)
 Detail spesifik: Penipu menawarkan pekerjaan paruh waktu mudah seperti 'Like & Subscribe YouTube'.
@@ -187,9 +175,7 @@ Korban: Oh harus deposit dulu ya?
 Penipu: Iya kak, untuk jaminan saja. Semua member premium juga begitu kok. Mau dicoba kak?"""
     ]
     
-    # Kumpulan contoh non-fraud yang beragam.
     normal_example_pool = [
-        # Contoh 1: Driver Ojol
         """### CONTOH
 Konteks Skenario: Layanan Pesan Antar Makanan & Transportasi Online
 Detail spesifik: Driver Gojek/Grab mengonfirmasi alamat pengantaran dan patokannya kepada pelanggan.
@@ -199,7 +185,6 @@ Penerima: Oh iya, Mas. Saya sudah lihat. Pakai jaket hijau kan?
 Penelepon: Betul, Pak. Saya di dekat motor Vario hitam.
 Penerima: Oke, saya ke sana sekarang. Tunggu sebentar ya.
 Penelepon: Siap, Pak. Ditunggu.""",
-        # Contoh 2: Janji Temu Medis
         """### CONTOH
 Konteks Skenario: Layanan Janji Temu (Appointment)
 Detail spesifik: Resepsionis klinik mengingatkan jadwal janji temu dengan dokter gigi kepada pasien.
@@ -218,7 +203,6 @@ Penelepon: Sama-sama, Bu. Selamat sore."""
     else:
         chosen_example = random.choice(normal_example_pool)
 
-    # Instruksi utama tetap sama karena sudah sangat kuat.
     main_instruction = """Anda adalah MESIN TRANSKRIPSI OTOMATIS yang sangat akurat. Tugas Anda adalah membuat transkrip percakapan telepon yang 100% bersih berdasarkan konteks.
 
 ATURAN MUTLAK:
@@ -261,10 +245,6 @@ def generate_dialog(prompt):
         print(f"\nError saat menghubungi Gemini API: {e}")
         return None
 
-# ==============================================================================
-# LAPISAN KEDUA: FUNGSI PEMBERSIH OTOMATIS (POST-PROCESSING)
-# ==============================================================================
-
 def clean_dialogue(text):
     """
     Membersihkan teks dialog secara paksa dari format yang tidak diinginkan
@@ -273,32 +253,21 @@ def clean_dialogue(text):
     if not text:
         return None
     
-    # 1. Hapus semua format markdown bold (**)
     cleaned_text = re.sub(r'\*\*', '', text)
     
-    # 2. Hapus semua teks di dalam kurung, termasuk kurungnya.
-    #    Ini akan menghapus (Staf E-Commerce), (berpikir cepat), (Tetapkan...), dll.
     cleaned_text = re.sub(r'\s*\([^)]*\)', '', cleaned_text)
     
-    # 3. Hapus baris yang mengandung narasi (yang seringkali dibungkus bintang atau tidak punya ':')
     lines = cleaned_text.split('\n')
     pure_dialog_lines = [line for line in lines if ':' in line]
     cleaned_text = '\n'.join(pure_dialog_lines)
     
     return cleaned_text.strip()
 
-
-# ==============================================================================
-# FUNGSI UTAMA (dengan penambahan langkah pembersihan)
-# ==============================================================================
-
 def main():
     """Fungsi utama untuk membuat dataset dialog."""
 
-    start_from_id = 1 # Lanjutkan dari ID ini
+    start_from_id = 1 
 
-    # Buka file dalam mode 'a' (append) untuk melanjutkan.
-    # Jika file tidak ada, header akan ditulis.
     file_exists = os.path.isfile(CSV_FILENAME)
 
     with open(CSV_FILENAME, "a", newline='', encoding="utf-8") as csvfile:
@@ -310,7 +279,6 @@ def main():
         if not file_exists:
             writer.writeheader()
         
-        # Menggabungkan semua skenario untuk loop yang lebih rapi
         all_scenarios = []
         for category, details in fraud_scenarios.items():
             for detail in details:
@@ -322,25 +290,20 @@ def main():
         dialog_counter = 0
         total_dialogs_generated_this_run = 0
 
-        # Loop utama
         for scenario in all_scenarios:
             for i in range(DIALOGS_PER_SCENARIO):
                 dialog_counter += 1
                 
-                # Lewati dialog yang sudah dibuat sebelumnya
                 if dialog_counter < start_from_id:
                     continue
 
                 label_text = "Penipuan" if scenario['label'] == 1 else "Normal"
                 print(f"  > Membuat dialog ID {dialog_counter} (Iterasi ke-{i+1}/{DIALOGS_PER_SCENARIO} untuk skenario: '{scenario['detail']}')")
 
-                # Langkah 1: Buat Prompt
                 prompt = build_prompt_revised(scenario['category'], scenario['detail'], scenario['label'])
                 
-                # Langkah 2: Hasilkan Output Mentah
                 raw_dialog = generate_dialog(prompt)
                 
-                # LANGKAH BARU: Bersihkan output secara paksa
                 final_dialog = clean_dialogue(raw_dialog)
                 
                 if final_dialog:
